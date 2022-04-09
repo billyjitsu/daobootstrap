@@ -20,13 +20,16 @@ interface IPaperNFT {
 
     /// @dev Returns the owner of the `tokenId` token.
     function ownerOf(uint256 tokenId) external view returns (address owner);
+
+    /// @dev DAO Mint of NFT
+    function daoMintNFT(address owner) external;
 }
 
 contract DaoVote is IERC721Receiver {
 
     IPaperNFT paperNft;
 
-    constructor(address nftContract, address marketplaceContract) payable {
+    constructor(address nftContract) payable {
         paperNft = IPaperNFT(nftContract);
     }
 
@@ -41,14 +44,16 @@ contract DaoVote is IERC721Receiver {
     }
 
     struct Proposal {
+        // the wallet to mint a free NFT
+        address prospect;
         // the token to buy or sell from the fake marketplace
-        uint256 nftTokenId;
+      //  uint256 nftTokenId;
         // how long does voting go on
         uint256 deadline;
         uint256 yayVotes;
         uint256 nayVotes;
         bool executed;
-        ProposalType proposalType;
+       // ProposalType proposalType;
         mapping(address => bool) voters;
     }
 
@@ -73,24 +78,16 @@ contract DaoVote is IERC721Receiver {
     }
 
     // Create a proposal in the DAO
-    function createProposal(uint256 _forTokenId, ProposalType _proposalType)
+    function createProposal(address _prospect)
         external
         memberOnly
         returns (uint256)
     {
-        if (_proposalType == ProposalType.BUY) {
-            require(nftMarketplace.available(_forTokenId), "NFT_NOT_FOR_SALE");
-        } else {
-            require(
-                nftMarketplace.ownerOf(_forTokenId) == address(this),
-                "NOT_OWNED"
-            );
-        }
 
         Proposal storage proposal = proposals[numProposals];
-        proposal.nftTokenId = _forTokenId;
+        proposal.prospect = _prospect;
         proposal.deadline = block.timestamp + 2 minutes;
-        proposal.proposalType = _proposalType;
+       // proposal.proposalType = _proposalType;
 
         numProposals++;
 
@@ -124,6 +121,7 @@ contract DaoVote is IERC721Receiver {
 
         proposal.executed = true;
         if (proposal.yayVotes > proposal.nayVotes) {
+            /*
             if (proposal.proposalType == ProposalType.BUY) {
                 uint256 purchasePrice = nftMarketplace.nftPurchasePrice();
                 require(
@@ -136,17 +134,21 @@ contract DaoVote is IERC721Receiver {
             } else {
                 nftMarketplace.sell(proposal.nftTokenId);
             }
+            */
+
+            //Mint NFT for prospect here
+            paperNft.daoMintNFT(proposal.prospect);
         }
     }
 
-    // We need a way for peopel to become a member of the DAO
+    // We need a way for people to become a member of the DAO
     function onERC721Received(
         address,
         address from,
         uint256 tokenId,
         bytes memory
     ) public override returns (bytes4) {
-        require(cryptoDevsNft.ownerOf(tokenId) == address(this), "MALICIOUS");
+        require(paperNft.ownerOf(tokenId) == address(this), "MALICIOUS");
         require(tokenLockedUp[tokenId] == false, "ALREADY_USED");
 
         tokenLockedUp[tokenId] = true;
@@ -169,13 +171,13 @@ contract DaoVote is IERC721Receiver {
             "MIN_MEMBERSHIP_PERIOD"
         );
 
-        uint256 share = (address(this).balance * member.lockedUpNFTs.length) /
-            totalVotingPower;
+        //uint256 share = (address(this).balance * member.lockedUpNFTs.length) /
+         //   totalVotingPower;
 
         totalVotingPower -= member.lockedUpNFTs.length;
-        payable(msg.sender).transfer(share);
+       // payable(msg.sender).transfer(share);
         for (uint256 i = 0; i < member.lockedUpNFTs.length; i++) {
-            cryptoDevsNft.safeTransferFrom(
+            paperNft.safeTransferFrom(
                 address(this),
                 msg.sender,
                 member.lockedUpNFTs[i],

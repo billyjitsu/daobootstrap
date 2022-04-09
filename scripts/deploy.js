@@ -18,6 +18,11 @@ const main = async () => {
     await nftContract.deployed();
     console.log("Contract deployed to:", nftContract.address);
 
+    const daoContractFactory = await hre.ethers.getContractFactory('DaoVote');
+    const daoContract = await daoContractFactory.deploy( nftContract.address );
+    await nftContract.deployed();
+    console.log("DAO Contract deployed to:", daoContract.address);
+
   
   };
   

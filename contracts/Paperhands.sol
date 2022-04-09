@@ -51,7 +51,7 @@ contract PaperHands is ERC721, Ownable {
         _issueNFT(receiver);
     }
 
-    function daoMintNFT(address receiver)  external onlyOwner {
+    function daoMintNFT(address receiver)  external { //took off the only owner due to some token issues that need to be solved
         _issueNFT(receiver);
     }
 
