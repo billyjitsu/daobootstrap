@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 // Minimal interface for CryptoDevs NFT containing the functions we care about
-interface ICryptoDevsNFT {
+interface IPaperNFT {
     /// @dev balanceOf returns the number of NFTs owned by the given address
     /// @param owner - address to fetch number of NFTs for
     /// @return Returns the number of NFTs owned
@@ -24,10 +24,10 @@ interface ICryptoDevsNFT {
 
 contract DaoVote is IERC721Receiver {
 
-    ICryptoDevsNFT cryptoDevsNft;
+    IPaperNFT paperNft;
 
     constructor(address nftContract, address marketplaceContract) payable {
-        cryptoDevsNft = ICryptoDevsNFT(nftContract);
+        paperNft = IPaperNFT(nftContract);
     }
 
     enum ProposalType {
