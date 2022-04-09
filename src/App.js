@@ -22,6 +22,9 @@ const App = () => {
   const [nftBurned, setNFTBurned] = useState(false);
   const [idToBurn, setIdToBurn] = useState("");
   const [time, setTime] = useState("");
+  const [proposalAddress, setProposalAddress] = useState("");
+  const [proposalLive, setProposalLive] = useState(false);
+  const [proposalID, setProposalID] = useState(null);
 
   const checkIfWalletIsConnected = async () => {
     const { ethereum } = window;
@@ -109,7 +112,7 @@ const App = () => {
     setIdToBurn(e.target.value);
     console.log(idToBurn);
   };
-
+  /////////////////////////////////
   const askContractToMintNft = async () => {
     
       try {
@@ -171,6 +174,34 @@ const App = () => {
     }
   }
 
+  const joinDAO = async () => {
+    
+    try {
+      const { ethereum } = window;
+
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const connectedContract = new ethers.Contract(CONTRACT_ADDRESS, paperNft.abi, signer);
+
+        console.log("Going to pop wallet now to pay gas...")
+        let nftTxn = await connectedContract["safeTransferFrom(address,address,uint256)"](currentAccount, DAO_CONTRACT_ADDRESS, idToBurn);
+
+        setLoading(true);
+
+        console.log("Mining...please wait.")
+        await nftTxn.wait();
+        
+        console.log(`Mined, see transaction: https://rinkeby.etherscan.io/tx/${nftTxn.hash}`);
+        setLoading(false);
+      } else {
+        console.log("Ethereum object doesn't exist!");
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   const getTokenTime = async () => {
     
     try {
@@ -192,7 +223,98 @@ const App = () => {
       console.log(error)
     }
   }
+  //////////////////////////////////////
+   //DAO Functions
+   const daoHandleChange = (e) => {
+    setProposalAddress(e.target.value);
+    console.log(proposalAddress);
+  };
+  
+  const createProposal = async () => {
+    
+    try {
+      const { ethereum } = window;
 
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const connectedContract = new ethers.Contract(DAO_CONTRACT_ADDRESS, daoVote.abi, signer);
+
+        console.log("Going to pop wallet now to pay gas...")
+        let nftTxn = await connectedContract.createProposal(proposalAddress);
+
+        setLoading(true);
+
+        await nftTxn.wait();
+        
+        setLoading(false);
+        setProposalLive(true);
+        let ppsl = await connectedContract.numProposals();
+        console.log('ppsl', ppsl)
+        let numOfProposals = String(ppsl - 1);
+        console.log('numofProposals', numOfProposals)
+        setProposalID(numOfProposals );
+      } else {
+        console.log("Ethereum object doesn't exist!");
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const executeProposal = async () => {
+    
+    try {
+      const { ethereum } = window;
+
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const connectedContract = new ethers.Contract(DAO_CONTRACT_ADDRESS, daoVote.abi, signer);
+
+        console.log("Going to pop wallet now to pay gas...")
+        let nftTxn = await connectedContract.executeProposal(proposalID);
+
+        setLoading(true);
+
+        await nftTxn.wait();
+        
+        setLoading(false);
+        
+      } else {
+        console.log("Ethereum object doesn't exist!");
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const voteProposal = async () => {
+    
+    try {
+      const { ethereum } = window;
+
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const connectedContract = new ethers.Contract(DAO_CONTRACT_ADDRESS, daoVote.abi, signer);
+
+        console.log("Going to pop wallet now to pay gas...")
+        let nftTxn = await connectedContract.voteOnProposal(0, 0);
+
+        setLoading(true);
+
+        console.log("Mining...please wait.")
+        await nftTxn.wait();
+        setLoading(false);
+        
+      } else {
+        console.log("Ethereum object doesn't exist!");
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   useEffect(() => {
     checkIfWalletIsConnected();
@@ -206,7 +328,7 @@ const App = () => {
   );
 
   /*
-  * We want the "Connect to Wallet" button to dissapear if they've already connected their wallet!
+  * Buttons
   */
   const renderMintUI = () => (
     <button onClick={askContractToMintNft} className="cta-button connect-wallet-button">
@@ -226,6 +348,36 @@ const App = () => {
     </button>
   );
 
+  const joinTheDAO = () => (
+    <button onClick={joinDAO} className="cta-button connect-wallet-button">
+      Join DAO
+    </button>
+  );
+
+  const startAProposal = () => (
+    <button onClick={createProposal} className="cta-button connect-wallet-button">
+      Create Proposal
+    </button>
+  );
+
+  const vote = () => (
+    <>
+    <button onClick={voteProposal} className="cta-button connect-wallet-button-small">
+      yes
+    </button>
+    <button onClick={voteProposal} className="cta-button connect-wallet-button-small">
+    no
+    </button>
+    </>
+  );
+
+  const execute = () => (
+    <button onClick={executeProposal} className="cta-button connect-wallet-button">
+      Execute
+    </button>
+  );
+
+
   return (
     <div className="App">
       <div className="container">
@@ -239,8 +391,7 @@ const App = () => {
         {loading && (
         <>
           <p className="sub-text">
-            Your tokens are minting. Please wait a few minutes. This message
-            will be replaced with your transaction once minted.
+            Please wait a few minutes. Doing Something...
           </p>
         <br />
         </>
@@ -256,22 +407,54 @@ const App = () => {
           >{`View NFT on OpenSea`}</a></p>
         </div>
       )}
+      <div className='row'>
+      <div className='column'>
+         <div>
+       <p className="sub-text-small">Vote Power</p>
+          {joinTheDAO()}
+          <div></div>
+         <input type="text" name="TokenID" value={idToBurn} placeholder="Token ID" onChange={handleChange} />
+         </div>
 
-        <div>
-        <p className="sub-text-small">Check Timestamp</p>
-        {nftTimeStamp()}
-        <div></div>
+         <div>
+         <p className="sub-text-small">Check Timestamp</p>
+         {nftTimeStamp()}
+         <div></div>
+         <input type="text" name="TokenID" value={idToBurn} placeholder="Token ID" onChange={handleChange} />
+         <div className='sub-text-small'>{time}</div>
+         </div>
+         <div>
+          <p className="sub-text-small">Oh, you got paperhands?</p>
+         {renderBurnUI()}
+          <div></div>
         <input type="text" name="TokenID" value={idToBurn} placeholder="Token ID" onChange={handleChange} />
-        <div className='sub-text-small'>{time}</div>
-        
+         </div>
+
       </div>
 
-      <div>
-        <p className="sub-text-small">Oh, you got paperhands?</p>
-      {renderBurnUI()}
-        <div></div>
-      <input type="text" name="TokenID" value={idToBurn} placeholder="Token ID" onChange={handleChange} />
+
+      <div className='column'>
+        <div>
+          <p className="sub-text-small">You need a staked NFT to start a proposal</p>
+            {startAProposal()}
+           <div></div>
+          <input type="text" name="address" value={proposalAddress} placeholder="address" onChange={daoHandleChange} />
+        </div>
+        <div>
+          <p className="sub-text-small">Vote Proposal ID:  {proposalID}</p>
+            {vote()}
+        </div>
+        <div>
+          <p className="sub-text-small">Execute Passed Proposal</p>
+            {execute()}
+        </div>
+
+
       </div>
+
+
+
+      </div> {/*The container for columns */}
 
       {nftBurned && (
         <div>

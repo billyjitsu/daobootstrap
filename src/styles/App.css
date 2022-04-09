@@ -70,6 +70,13 @@
   margin-right: 15px;
 }
 
+.connect-wallet-button-small {
+  background: -webkit-linear-gradient(left, #a200d6, #ff6fdf);
+  background-size: 200% 200%;
+  animation: gradient-animation 4s ease infinite;
+  margin-right: 15px;
+}
+
 .opensea-button {
   background-color: rgb(32, 129, 226);
 }
@@ -96,6 +103,20 @@
   color: white;
   font-size: 16px;
   font-weight: bold;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 100%;
+  flex: 1;
 }
 
 /* KeyFrames */
