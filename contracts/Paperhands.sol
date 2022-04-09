@@ -16,12 +16,14 @@ contract PaperHands is ERC721, Ownable {
     mapping(uint256 => int96) public flowRates;
     mapping(uint256 => uint256) public tokenTimestamp;
 
+    uint256 public cost = 0 ether;  
+    uint256 public maxSupply = 100;  
     uint256 public nextId; // this is so we can increment the number (each stream has new id we store in flowRates)
     /// testing vars
     int96 public timeStampValue; //pulling this value for number
 
-    string public nftBaseURI = 'ipfs://QmQsMwfqUXpXMheDptT4jaG9FzEU82KirM1ZRBCiepArCU/1.json';
-
+    string public nftBaseURI = 'https://nfbeez.mypinata.cloud/ipfs/QmUVHWyqhTBu4JLbTc7Pdc7vwumHHWBKeXFS8oprwWD2Em/1.json';
+    
 	bool public paused = false;
 
     constructor(
@@ -40,6 +42,7 @@ contract PaperHands is ERC721, Ownable {
         assert(address(_host) != address(0));
         assert(address(_cfa) != address(0));
         assert(address(_acceptedToken) != address(0));
+        
     }
 
     event NFTMinted(uint256 tokenId, address receiver, uint256 timeStampValue);
@@ -48,6 +51,11 @@ contract PaperHands is ERC721, Ownable {
     
     //Create a public mint
     function mintNFT(address receiver) public payable {
+        require(!paused, "the contract is paused");
+		require(msg.sender != address(this), 'Issue to a new address');
+		require(nextId <=  maxSupply, "max NFT limit exceeded");
+		require(msg.value >= cost, "insufficient funds");
+
         _issueNFT(receiver);
     }
 
@@ -74,7 +82,7 @@ contract PaperHands is ERC721, Ownable {
         uint256 timeHeld = block.timestamp - hodl;
         // convert time held to a int96 usable flow rate
         int96 flowTime = int96(int256(timeHeld));
-        timeStampValue = flowTime / 60 / 60 / 24; // Divide by 60 seconds , 60 minutes, 24 hours
+        timeStampValue = flowTime; //For Demo purposes, need speed / 60 / 60 / 24; // Divide by 60 seconds , 60 minutes, 24 hours
         int96 burnFlowRate = timeStampValue * 385802469; //Multiply times .001 token a month
         flowRates[tokenId] = burnFlowRate;
         //burn NFT
@@ -82,7 +90,7 @@ contract PaperHands is ERC721, Ownable {
         
         //Create a flow of tokens based of time held
        _createFlow(receiver, burnFlowRate);
-
+        delete flowRates[tokenId];
         //emit event
         emit tokenBurned(nextId, receiver, flowRates[tokenId]);
     }
@@ -178,6 +186,11 @@ contract PaperHands is ERC721, Ownable {
         );
     }
 
+    //Internal overide
+    function _baseURI() internal view virtual override returns (string memory) {
+    return nftBaseURI;
+    }
+
     // Extra Items
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
@@ -188,12 +201,20 @@ contract PaperHands is ERC721, Ownable {
             : "";
     }
 
+    function setCost(uint256 _newCost) public onlyOwner() {
+    	cost = _newCost;
+  	}
+
     function setNFTBaseURI(string memory _nftBaseURI) public onlyOwner() {
     	nftBaseURI = _nftBaseURI;
   	}
 
     function pause(bool _state) public onlyOwner {
     	paused = _state;
+  	}
+
+    function changeMaxSupply(uint256 _newmaxSupplyAmount) public onlyOwner() {
+    	maxSupply = _newmaxSupplyAmount;
   	}
 
     //function to pull out token

@@ -9,8 +9,8 @@ const owner = "0xe2b8651bF50913057fF47FC4f02A8e12146083B8";
 const main = async () => {
     const nftContractFactory = await hre.ethers.getContractFactory('PaperHands');
     const nftContract = await nftContractFactory.deploy(
-        "rinkeby", 
-        "RKY", 
+        "DAO NFT", 
+        "DNFT", 
         host,
         cfa,
         fDAIx,
@@ -18,6 +18,7 @@ const main = async () => {
     await nftContract.deployed();
     console.log("Contract deployed to:", nftContract.address);
 
+ 
     const daoContractFactory = await hre.ethers.getContractFactory('DaoVote');
     const daoContract = await daoContractFactory.deploy( nftContract.address );
     await nftContract.deployed();

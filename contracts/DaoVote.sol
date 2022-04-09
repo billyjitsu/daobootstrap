@@ -46,8 +46,6 @@ contract DaoVote is IERC721Receiver {
     struct Proposal {
         // the wallet to mint a free NFT
         address prospect;
-        // the token to buy or sell from the fake marketplace
-      //  uint256 nftTokenId;
         // how long does voting go on
         uint256 deadline;
         uint256 yayVotes;
@@ -121,20 +119,6 @@ contract DaoVote is IERC721Receiver {
 
         proposal.executed = true;
         if (proposal.yayVotes > proposal.nayVotes) {
-            /*
-            if (proposal.proposalType == ProposalType.BUY) {
-                uint256 purchasePrice = nftMarketplace.nftPurchasePrice();
-                require(
-                    address(this).balance >= purchasePrice,
-                    "NOT_ENOUGH_FUNDS"
-                );
-                nftMarketplace.purchase{value: purchasePrice}(
-                    proposal.nftTokenId
-                );
-            } else {
-                nftMarketplace.sell(proposal.nftTokenId);
-            }
-            */
 
             //Mint NFT for prospect here
             paperNft.daoMintNFT(proposal.prospect);
@@ -167,15 +151,11 @@ contract DaoVote is IERC721Receiver {
     function quit() external memberOnly {
         Member storage member = members[msg.sender];
         require(
-            block.timestamp - member.joinedAt > 5 minutes,
+            block.timestamp - member.joinedAt > 1 minutes,
             "MIN_MEMBERSHIP_PERIOD"
         );
 
-        //uint256 share = (address(this).balance * member.lockedUpNFTs.length) /
-         //   totalVotingPower;
-
         totalVotingPower -= member.lockedUpNFTs.length;
-       // payable(msg.sender).transfer(share);
         for (uint256 i = 0; i < member.lockedUpNFTs.length; i++) {
             paperNft.safeTransferFrom(
                 address(this),
