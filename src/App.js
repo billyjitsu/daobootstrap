@@ -25,6 +25,7 @@ const App = () => {
   const [proposalAddress, setProposalAddress] = useState("");
   const [proposalLive, setProposalLive] = useState(false);
   const [proposalID, setProposalID] = useState(null);
+  const [votes, setVote] = useState(null);
 
   const checkIfWalletIsConnected = async () => {
     const { ethereum } = window;
@@ -214,8 +215,11 @@ const App = () => {
 
         let tokenIdTimeStamp = await connectedContract.tokenTimestamp(idToBurn);
         let stamp = String(tokenIdTimeStamp);
-        setTime(stamp);
-        console.log("timestamp", stamp)
+        let stamps = Number(stamp);
+        let time = new Date(stamps * 1000);
+        let times = String(time)
+        setTime(times);
+        console.log("timestamp", time)
       } else {
         console.log("Ethereum object doesn't exist!");
       }
@@ -289,7 +293,7 @@ const App = () => {
     }
   }
 
-  const voteProposal = async () => {
+  const quitTheDAO = async () => {
     
     try {
       const { ethereum } = window;
@@ -300,7 +304,63 @@ const App = () => {
         const connectedContract = new ethers.Contract(DAO_CONTRACT_ADDRESS, daoVote.abi, signer);
 
         console.log("Going to pop wallet now to pay gas...")
-        let nftTxn = await connectedContract.voteOnProposal(0, 0);
+        let nftTxn = await connectedContract.quit();
+
+        setLoading(true);
+
+        await nftTxn.wait();
+        
+        setLoading(false);
+        
+      } else {
+        console.log("Ethereum object doesn't exist!");
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const voteProposalYes = async () => {
+    
+    try {
+      const { ethereum } = window;
+
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const connectedContract = new ethers.Contract(DAO_CONTRACT_ADDRESS, daoVote.abi, signer);
+  
+
+        console.log("Going to pop wallet now to pay gas...")
+        let nftTxn = await connectedContract.voteOnProposal(proposalID, 0);
+
+        setLoading(true);
+
+        console.log("Mining...please wait.")
+        await nftTxn.wait();
+        setLoading(false);
+        
+      } else {
+        console.log("Ethereum object doesn't exist!");
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const voteProposalNo = async () => {
+    
+    try {
+      const { ethereum } = window;
+
+      if (ethereum) {
+        const provider = new ethers.providers.Web3Provider(ethereum);
+        const signer = provider.getSigner();
+        const connectedContract = new ethers.Contract(DAO_CONTRACT_ADDRESS, daoVote.abi, signer);
+  
+
+        console.log("Going to pop wallet now to pay gas...")
+        let nftTxn = await connectedContract.voteOnProposal(proposalID, 1);
 
         setLoading(true);
 
@@ -362,10 +422,10 @@ const App = () => {
 
   const vote = () => (
     <>
-    <button onClick={voteProposal} className="cta-button connect-wallet-button-small">
+    <button onClick={voteProposalYes}  className="cta-button connect-wallet-button-small">
       yes
     </button>
-    <button onClick={voteProposal} className="cta-button connect-wallet-button-small">
+    <button onClick={voteProposalNo} className="cta-button connect-wallet-button-small">
     no
     </button>
     </>
@@ -374,6 +434,12 @@ const App = () => {
   const execute = () => (
     <button onClick={executeProposal} className="cta-button connect-wallet-button">
       Execute
+    </button>
+  );
+
+  const leave = () => (
+    <button onClick={quitTheDAO} className="cta-button connect-wallet-button">
+      Leave the DAO
     </button>
   );
 
@@ -447,6 +513,10 @@ const App = () => {
         <div>
           <p className="sub-text-small">Execute Passed Proposal</p>
             {execute()}
+        </div>
+        <div>
+          <p className="sub-text-small">PaperHanded</p>
+            {leave()}
         </div>
 
 
