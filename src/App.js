@@ -8,7 +8,7 @@ import daoVote from './utils/DaoVote.json';
 // Constants
 const TWITTER_HANDLE = 'wc49358';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
-const OPENSEA_LINK = 'https://testnets.opensea.io/collection/buildstream-v2';
+const OPENSEA_LINK = 'https://testnets.opensea.io/collection/dao-nft-ivanzfcscu';
 const SUPERFLUID_LINK = 'https://app.superfluid.finance/dashboard';
 const TOTAL_MINT_COUNT = 50;
 const CONTRACT_ADDRESS = "0xBF257534eC102dBF2C0935D64dDD004e680ABE0c";
