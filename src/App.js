@@ -4,15 +4,34 @@ import twitterLogo from './assets/twitter-logo.svg';
 import React, { useEffect, useState } from "react";
 import paperNft from './utils/PaperHands.json';
 import daoVote from './utils/DaoVote.json';
+//The graph
+import { createClient } from 'urql';
+
 
 // Constants
 const TWITTER_HANDLE = 'wc49358';
 const TWITTER_LINK = `https://twitter.com/${TWITTER_HANDLE}`;
 const OPENSEA_LINK = 'https://testnets.opensea.io/collection/dao-nft-ivanzfcscu';
 const SUPERFLUID_LINK = 'https://app.superfluid.finance/dashboard';
-const TOTAL_MINT_COUNT = 50;
 const CONTRACT_ADDRESS = "0xBF257534eC102dBF2C0935D64dDD004e680ABE0c";
 const DAO_CONTRACT_ADDRESS = "0x79dF4FbB23c5a78cA26f8960f009176E146df8a5";
+//The Graph
+const APIURL = 'https://api.thegraph.com/subgraphs/name/billyjitsu/paperhands';
+
+const query = `
+  query {
+    users(first: 15) {
+      id
+      tokens {
+        id
+      }
+    }
+  } 
+  `;
+
+const client = createClient({
+  url: APIURL
+});
 
 const App = () => {
 
@@ -26,6 +45,14 @@ const App = () => {
   const [proposalLive, setProposalLive] = useState(false);
   const [proposalID, setProposalID] = useState(null);
   const [votes, setVote] = useState(null);
+  const [tokensHeld, setTokensHeld] = useState([]);
+
+  //Pull the graph data
+  const fetchData = async () => {
+    const response = await client.query(query).toPromise()
+    console.log('response: ', response.data.users)
+    setTokensHeld(response.data.users);
+  }
 
   const checkIfWalletIsConnected = async () => {
     const { ethereum } = window;
@@ -378,6 +405,7 @@ const App = () => {
 
   useEffect(() => {
     checkIfWalletIsConnected();
+    fetchData();
   }, [])
 
   // Render Methods
@@ -518,12 +546,7 @@ const App = () => {
           <p className="sub-text-small">PaperHanded</p>
             {leave()}
         </div>
-
-
       </div>
-
-
-
       </div> {/*The container for columns */}
 
       {nftBurned && (
@@ -537,8 +560,19 @@ const App = () => {
         </div>
       )}
 
+      <div className='sub-text-small'>
+        <p>Current NFT locations:</p>
+      {
+        tokensHeld.map((token) => (
+          <div> {token.id} </div>
+        ))
+      }
+      </div>
+    
+
 
         <div className="footer-container">
+          <div></div>
           <img alt="Twitter Logo" className="twitter-logo" src={twitterLogo} />
           <a
             className="footer-text"
